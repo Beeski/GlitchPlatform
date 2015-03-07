@@ -3,16 +3,19 @@ using System.Collections;
 
 public class Player : MonoBehaviour 
 {
+	[SerializeField] private Transform CamRoot;
 	[SerializeField] private float JumpForce = 250.0f;
 	[SerializeField] private float MaxSpeed = 2.0f;
+	[SerializeField] private float CameraOffset = 2.0f;
 	[SerializeField] private Transform GroundCheck;
 	[SerializeField] private LayerMask GroundLayer;
-
 
 	private Animator mAnim;
 	private float mGroundRadius = 0.2f;
 	private bool mFacingRight;
 	private bool mGrounded;
+
+	public bool Enabled { get; set; }
 
 	void Start() 
 	{
@@ -23,10 +26,17 @@ public class Player : MonoBehaviour
 
 	void Update()
 	{
-		if( mGrounded && Input.GetKeyDown( KeyCode.Space ) )
+		if( Enabled && mGrounded && Input.GetKeyDown( KeyCode.Space ) )
 		{
 			mAnim.SetBool( "Grounded", false );
-			rigidbody2D.AddForce( new Vector2( 0.0f, JumpForce ) );
+			rigidbody2D.AddForce( new Vector2( JumpForce * ( mFacingRight ? -0.5f : 0.5f ), JumpForce ) );
+		}
+
+		if( CamRoot != null )
+		{
+			Vector3 camPos = CamRoot.position;
+			camPos.y = transform.position.y + CameraOffset;
+			CamRoot.position = camPos;
 		}
 	}
 	
@@ -37,16 +47,19 @@ public class Player : MonoBehaviour
 
 		mAnim.SetFloat( "VSpeed", rigidbody2D.velocity.y ); 
 
-		float move = Input.GetAxis( "Horizontal" );
-		mAnim.SetFloat( "Speed", Mathf.Abs( move ) );
-		rigidbody2D.velocity = new Vector2( move * MaxSpeed, rigidbody2D.velocity.y );
-		if( move > 0.0f && mFacingRight ) 
+		if( Enabled )
 		{
-			Flip();
-		}
-		else if( move < 0.0f && !mFacingRight )
-		{
-			Flip();
+			float move = Input.GetAxis( "Horizontal" );
+			mAnim.SetFloat( "Speed", Mathf.Abs( move ) );
+			rigidbody2D.velocity = new Vector2( move * MaxSpeed, rigidbody2D.velocity.y );
+			if( move > 0.0f && mFacingRight ) 
+			{
+				Flip();
+			}
+			else if( move < 0.0f && !mFacingRight )
+			{
+				Flip();
+			}
 		}
 	}
 
